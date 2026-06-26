@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon CA — GUILLERME · Importalux</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#EDF1F7;
+  color:#1a2a3a;font-size:14px;-webkit-font-smoothing:antialiased}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#0F1F2E 0%,#1a5276 60%,#CB4335 100%);
+  color:#fff;padding:20px 20px 16px}
+.hdr-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.avatar{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  font-weight:800;flex-shrink:0;border:2px solid rgba(255,255,255,.3)}
+.hdr-name{font-size:22px;font-weight:800;letter-spacing:.3px}
+.hdr-sub{font-size:12px;opacity:.75;margin-top:3px}
+.update-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 12px;
+  font-size:11px;white-space:nowrap}
+.update-dot{width:7px;height:7px;border-radius:50%;background:#2ECC71;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── SAISONS TABS ── */
+.season-bar{display:flex;gap:0;background:rgba(0,0,0,.2);border-radius:8px;
+  padding:3px;margin-top:10px;width:fit-content}
+.season-tab{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:700;
+  cursor:default;opacity:.55;letter-spacing:.3px;text-transform:uppercase}
+.season-tab.active{background:rgba(255,255,255,.2);opacity:1}
+
+/* ── KPI GRID ── */
+.main{max-width:1200px;margin:0 auto;padding:16px 14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:540px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kc{background:#fff;border-radius:14px;padding:14px 16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid #2E75B6;
+  position:relative;overflow:hidden}
+.kc::after{content:'';position:absolute;right:-10px;top:-10px;
+  width:60px;height:60px;border-radius:50%;background:currentColor;opacity:.04}
+.kc-icon{position:absolute;right:12px;top:12px;font-size:22px;opacity:.12}
+.kc-lbl{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:#7F8C8D;margin-bottom:6px}
+.kc-amt{font-size:18px;font-weight:800;letter-spacing:-.3px;line-height:1.1}
+.kc-sub{font-size:11px;color:#999;margin-top:4px}
+.kc-evol{font-size:13px;font-weight:700;margin-top:6px}
+
+/* ── SECTIONS ── */
+.section-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.4px;
+  color:#6B7E99;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.section-lbl::after{content:'';flex:1;height:1px;background:#D5DFE8}
+.card{background:#fff;border-radius:14px;padding:18px;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:14px}
+
+/* ── TABLEAU ── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#1a2a3a;color:#fff;padding:5px 7px;text-align:right;
+  font-size:10px;font-weight:700;white-space:nowrap}
+th.th-left{text-align:left}
+th.th-sort{cursor:pointer;user-select:none}
+th.th-sort:hover{background:#2E4A6A}
+th.th-sort .si{font-size:9px;opacity:.4;margin-left:3px}
+th.th-sort.asc .si::after{content:'▲';opacity:1;color:#7EC8F8}
+th.th-sort.desc .si::after{content:'▼';opacity:1;color:#7EC8F8}
+th.th-sort.asc .si, th.th-sort.desc .si{opacity:1}
+td{padding:5px 7px;border-bottom:1px solid #EAF0F7;text-align:right;vertical-align:middle}
+td.td-code{font-family:monospace;font-size:10.5px;text-align:left;color:#6B7E99}
+td.td-name{text-align:left;font-weight:600;max-width:120px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.td-ville{text-align:left;max-width:90px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;color:#444}
+td.td-proj{font-weight:800;background:#FFFBF0}
+tr:nth-child(even) td{background:#F8FBFF}
+tr:hover td{background:#EDF4FF!important}
+tr.tf td{background:#1a2a3a;color:#fff;font-weight:700;border:none}
+
+/* ── BARRES ── */
+.pbar-wrap{display:inline-block;width:55px;background:#EAF0F7;
+  border-radius:3px;height:6px;vertical-align:middle;margin-right:5px}
+.pbar-fill{height:6px;border-radius:3px;transition:width .3s}
+.pbar-pct{font-size:11px;color:#888}
+
+/* ── FOOTER ── */
+.footer{text-align:center;color:#B0B8C4;font-size:11px;padding:16px;
+  border-top:1px solid #DDE4ED;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="avatar">GU</div>
+    <div style="flex:1">
+      <div class="hdr-name">GUILLERME</div>
+      <div class="hdr-sub">Mon tableau de bord commercial · Importalux</div>
+    </div>
+    <div class="update-badge">
+      <span class="update-dot"></span>
+      Mis à jour<br>26/06/2026 à 08:00
+    </div>
+  </div>
+  <div class="season-bar">
+    <div class="season-tab active">Saison 2025/2026</div>
+    <div class="season-tab">vs Saison 2024/2025</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPI -->
+  <div class="section-lbl">Vue d'ensemble — Saison 2025/2026</div>
+  <div class="kpi-grid">
+
+    <div class="kc" style="border-color:#CB4335;
+      background:linear-gradient(135deg,#0F1F2E,#CB4335);color:#fff">
+      <span class="kc-icon">✅</span>
+      <div class="kc-lbl" style="color:rgba(255,255,255,.7)">CA Facturé N</div>
+      <div class="kc-amt">18 920 €</div>
+      <div class="kc-sub" style="color:rgba(255,255,255,.6)">10 clients · 17 factures</div>
+    </div>
+
+    <div class="kc" style="border-color:#E67E22">
+      <span class="kc-icon">📋</span>
+      <div class="kc-lbl" style="color:#E67E22">BDC en cours</div>
+      <div class="kc-amt" style="color:#E67E22">0 €</div>
+      <div class="kc-sub">0 clients · 0 commandes</div>
+    </div>
+
+    <div class="kc" style="border-color:#9B59B6">
+      <span class="kc-icon">🎯</span>
+      <div class="kc-lbl" style="color:#9B59B6">CA Projeté N</div>
+      <div class="kc-amt" style="color:#9B59B6">18 920 €</div>
+      <div class="kc-sub">Facturé + BDC</div>
+    </div>
+
+    <div class="kc" style="border-color:#95A5A6">
+      <span class="kc-icon">📉</span>
+      <div class="kc-lbl">CA Saison 2024/2025</div>
+      <div class="kc-amt" style="color:#555">26 329 €</div>
+      <div class="kc-sub">Saison précédente</div>
+    </div>
+
+    <div class="kc" style="border-color:#C0392B;grid-column:span 2">
+      <span class="kc-icon">📊</span>
+      <div class="kc-lbl">Évolution projetée</div>
+      <div class="kc-amt" style="color:#C0392B">
+        ▼ 28.1 %
+      </div>
+      <div class="kc-sub">Projeté Saison 2025/2026 vs Facturé Saison 2024/2025</div>
+    </div>
+
+  </div>
+
+  <!-- GRAPHIQUE -->
+  <div class="section-lbl">CA mensuel</div>
+  <div class="card">
+    <canvas id="chartMensuel" height="120"></canvas>
+  </div>
+
+  <!-- TABLEAU CLIENTS -->
+  <div class="section-lbl">Mes clients</div>
+  <div class="card">
+    <div style="margin-bottom:10px;font-size:11px;color:#888">
+      Cliquez sur un en-tête de colonne pour trier &nbsp;·&nbsp;
+      <span style="color:#E67E22">■</span> BDC = commandes en cours non encore facturées
+    </div>
+    <div class="tbl-wrap">
+    <table id="tblClients">
+      <thead><tr>
+        <th class="th-left th-sort" onclick="sortTable('tblClients',0,'str',this)">Code <span class="si">⇅</span></th>
+        <th class="th-left th-sort" onclick="sortTable('tblClients',1,'str',this)">Client <span class="si">⇅</span></th>
+        <th class="th-sort" onclick="sortTable('tblClients',2,'str',this)">Dpt <span class="si">⇅</span></th>
+        <th class="th-left th-sort" onclick="sortTable('tblClients',3,'str',this)">Ville <span class="si">⇅</span></th>
+        <th class="th-sort" onclick="sortTable('tblClients',4,'num',this)">CA Facturé N <span class="si">⇅</span></th>
+        <th class="th-sort" style="color:#E67E22" onclick="sortTable('tblClients',5,'num',this)">BDC en cours <span class="si">⇅</span></th>
+        <th class="th-sort" style="background:#E67E2233" onclick="sortTable('tblClients',6,'num',this)">CA Projeté N <span class="si">⇅</span></th>
+        <th class="th-sort" onclick="sortTable('tblClients',7,'num',this)">Saison 2024/2025 <span class="si">⇅</span></th>
+        <th class="th-sort" onclick="sortTable('tblClients',8,'num',this)">Évolution <span class="si">⇅</span></th>
+        <th class="th-left th-sort" onclick="sortTable('tblClients',9,'num',this)">Part <span class="si">⇅</span></th>
+      </tr></thead>
+      <tbody><tr><td data-val="4872" class="td-code">4872</td><td data-val="1001 TRESORS - SARL PYRENEES SPORTS" class="td-name">1001 TRESORS - SARL PYRENEES SPORTS</td><td data-val="66" class="td-code" style="text-align:center">66</td><td data-val="Font Romeu" class="td-ville">Font Romeu</td><td data-val="3994.5">3 994 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="3994.5" style="color:#bbb;font-size:11px">—</td><td data-val="4703.7" style="color:#888">4 704 €</td><td data-val="-15.08" style="color:#C0392B;font-weight:700">▼ 15.1 %</td><td data-val="21.11"><div class="pbar-wrap"><div class="pbar-fill" style="width:21.1%;background:#CB4335"></div></div><span class="pbar-pct">21.1%</span></td></tr>
+<tr><td data-val="4830" class="td-code">4830</td><td data-val="LE PIOLET" class="td-name">LE PIOLET</td><td data-val="31" class="td-code" style="text-align:center">31</td><td data-val="Bagneres De Luchon" class="td-ville">Bagneres De Luchon</td><td data-val="2297.8">2 298 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="2297.8" style="color:#bbb;font-size:11px">—</td><td data-val="3568.92" style="color:#888">3 569 €</td><td data-val="-35.62" style="color:#C0392B;font-weight:700">▼ 35.6 %</td><td data-val="12.14"><div class="pbar-wrap"><div class="pbar-fill" style="width:12.1%;background:#CB4335"></div></div><span class="pbar-pct">12.1%</span></td></tr>
+<tr><td data-val="4811" class="td-code">4811</td><td data-val="SARL SANDMO - LA MARMOTTE" class="td-name">SARL SANDMO - LA MARMOTTE</td><td data-val="65" class="td-code" style="text-align:center">65</td><td data-val="St Lary Soulan" class="td-ville">St Lary Soulan</td><td data-val="2205.6">2 206 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="2205.6" style="color:#bbb;font-size:11px">—</td><td data-val="2012.8" style="color:#888">2 013 €</td><td data-val="9.58" style="color:#27AE60;font-weight:700">▲ 9.6 %</td><td data-val="11.66"><div class="pbar-wrap"><div class="pbar-fill" style="width:11.7%;background:#CB4335"></div></div><span class="pbar-pct">11.7%</span></td></tr>
+<tr><td data-val="4832" class="td-code">4832</td><td data-val="SAS XTREM - ESPRIT MONTAGNE" class="td-name">SAS XTREM - ESPRIT MONTAGNE</td><td data-val="65" class="td-code" style="text-align:center">65</td><td data-val="Loudenvielle" class="td-ville">Loudenvielle</td><td data-val="2127.8999999999996">2 128 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="2127.8999999999996" style="color:#bbb;font-size:11px">—</td><td data-val="852.8" style="color:#888">853 €</td><td data-val="149.52" style="color:#27AE60;font-weight:700">▲ 149.5 %</td><td data-val="11.25"><div class="pbar-wrap"><div class="pbar-fill" style="width:11.2%;background:#CB4335"></div></div><span class="pbar-pct">11.2%</span></td></tr>
+<tr><td data-val="4831" class="td-code">4831</td><td data-val="ETS TRESCAZES" class="td-name">ETS TRESCAZES</td><td data-val="09" class="td-code" style="text-align:center">09</td><td data-val="Oust" class="td-ville">Oust</td><td data-val="1810.85">1 811 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1810.85" style="color:#bbb;font-size:11px">—</td><td data-val="2981.88" style="color:#888">2 982 €</td><td data-val="-39.27" style="color:#C0392B;font-weight:700">▼ 39.3 %</td><td data-val="9.57"><div class="pbar-wrap"><div class="pbar-fill" style="width:9.6%;background:#CB4335"></div></div><span class="pbar-pct">9.6%</span></td></tr>
+<tr><td data-val="4833" class="td-code">4833</td><td data-val="APE PARQUE ARAN SL" class="td-name">APE PARQUE ARAN SL</td><td data-val="25" class="td-code" style="text-align:center">25</td><td data-val="Bossost" class="td-ville">Bossost</td><td data-val="1606.0">1 606 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1606.0" style="color:#bbb;font-size:11px">—</td><td data-val="1270.12" style="color:#888">1 270 €</td><td data-val="26.44" style="color:#27AE60;font-weight:700">▲ 26.4 %</td><td data-val="8.49"><div class="pbar-wrap"><div class="pbar-fill" style="width:8.5%;background:#CB4335"></div></div><span class="pbar-pct">8.5%</span></td></tr>
+<tr><td data-val="4834" class="td-code">4834</td><td data-val="SARL DUVERT FOUCHER - UN COIN DE PARADIS" class="td-name">SARL DUVERT FOUCHER - UN COIN DE PARADIS</td><td data-val="09" class="td-code" style="text-align:center">09</td><td data-val="Ax Les Thermes" class="td-ville">Ax Les Thermes</td><td data-val="1552.8">1 553 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1552.8" style="color:#bbb;font-size:11px">—</td><td data-val="1657.3" style="color:#888">1 657 €</td><td data-val="-6.31" style="color:#C0392B;font-weight:700">▼ 6.3 %</td><td data-val="8.21"><div class="pbar-wrap"><div class="pbar-fill" style="width:8.2%;background:#CB4335"></div></div><span class="pbar-pct">8.2%</span></td></tr>
+<tr><td data-val="4900" class="td-code">4900</td><td data-val="L'ECHOPPE DU MONTAGNARD" class="td-name">L'ECHOPPE DU MONTAGNARD</td><td data-val="09" class="td-code" style="text-align:center">09</td><td data-val="Guzet" class="td-ville">Guzet</td><td data-val="1135.0">1 135 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1135.0" style="color:#bbb;font-size:11px">—</td><td data-val="803.0" style="color:#888">803 €</td><td data-val="41.34" style="color:#27AE60;font-weight:700">▲ 41.3 %</td><td data-val="6.00"><div class="pbar-wrap"><div class="pbar-fill" style="width:6.0%;background:#CB4335"></div></div><span class="pbar-pct">6.0%</span></td></tr>
+<tr><td data-val="5037" class="td-code">5037</td><td data-val="LE PESCAMOU TABAC PRESSE SOUVENIRS" class="td-name">LE PESCAMOU TABAC PRESSE SOUVENIRS</td><td data-val="64" class="td-code" style="text-align:center">64</td><td data-val="Arette" class="td-ville">Arette</td><td data-val="1113.8">1 114 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1113.8" style="color:#bbb;font-size:11px">—</td><td data-val="0.0" style="color:#888"><span style=color:#ccc>—</span></td><td data-val="9999.00" style="color:#aaa;font-weight:700">—</td><td data-val="5.89"><div class="pbar-wrap"><div class="pbar-fill" style="width:5.9%;background:#CB4335"></div></div><span class="pbar-pct">5.9%</span></td></tr>
+<tr><td data-val="4841" class="td-code">4841</td><td data-val="STE GENEVIEVE" class="td-name">STE GENEVIEVE</td><td data-val="65" class="td-code" style="text-align:center">65</td><td data-val="Lourdes" class="td-ville">Lourdes</td><td data-val="1076.2">1 076 €</td><td data-val="0" style="color:#ccc">—</td><td data-val="1076.2" style="color:#bbb;font-size:11px">—</td><td data-val="0.0" style="color:#888"><span style=color:#ccc>—</span></td><td data-val="9999.00" style="color:#aaa;font-weight:700">—</td><td data-val="5.69"><div class="pbar-wrap"><div class="pbar-fill" style="width:5.7%;background:#CB4335"></div></div><span class="pbar-pct">5.7%</span></td></tr>
+<tr><td data-val="4820" class="td-code">4820</td><td data-val="SARL BAMICADO - MAISON DU SOUVENIR" class="td-name">SARL BAMICADO - MAISON DU SOUVENIR</td><td data-val="65" class="td-code" style="text-align:center">65</td><td data-val="Cauterets" class="td-ville">Cauterets</td><td data-val="0.0"><span style=color:#ccc>—</span></td><td data-val="0" style="color:#ccc">—</td><td data-val="0.0" style="color:#bbb;font-size:11px">—</td><td data-val="2879.8" style="color:#888">2 880 €</td><td data-val="-100.00" style="color:#C0392B;font-weight:700">▼ 100.0 %</td><td data-val="0.00"><div class="pbar-wrap"><div class="pbar-fill" style="width:0.0%;background:#CB4335"></div></div><span class="pbar-pct">0.0%</span></td></tr>
+<tr><td data-val="4827" class="td-code">4827</td><td data-val="SARL LA MAISON DU CADEAU" class="td-name">SARL LA MAISON DU CADEAU</td><td data-val="66" class="td-code" style="text-align:center">66</td><td data-val="Les Angles" class="td-ville">Les Angles</td><td data-val="0.0"><span style=color:#ccc>—</span></td><td data-val="0" style="color:#ccc">—</td><td data-val="0.0" style="color:#bbb;font-size:11px">—</td><td data-val="4027.65" style="color:#888">4 028 €</td><td data-val="-100.00" style="color:#C0392B;font-weight:700">▼ 100.0 %</td><td data-val="0.00"><div class="pbar-wrap"><div class="pbar-fill" style="width:0.0%;background:#CB4335"></div></div><span class="pbar-pct">0.0%</span></td></tr>
+<tr><td data-val="4829" class="td-code">4829</td><td data-val="SARL BOUVERANDE" class="td-name">SARL BOUVERANDE</td><td data-val="65" class="td-code" style="text-align:center">65</td><td data-val="Gavarnie" class="td-ville">Gavarnie</td><td data-val="0.0"><span style=color:#ccc>—</span></td><td data-val="0" style="color:#ccc">—</td><td data-val="0.0" style="color:#bbb;font-size:11px">—</td><td data-val="1570.8" style="color:#888">1 571 €</td><td data-val="-100.00" style="color:#C0392B;font-weight:700">▼ 100.0 %</td><td data-val="0.00"><div class="pbar-wrap"><div class="pbar-fill" style="width:0.0%;background:#CB4335"></div></div><span class="pbar-pct">0.0%</span></td></tr>
+</tbody>
+      <tfoot><tr class="tf">
+        <td colspan="4" style="text-align:left">TOTAL</td>
+        <td>18 920 €</td>
+        <td>—</td>
+        <td>18 920 €</td>
+        <td>26 329 €</td>
+        <td style="color:#F1948A">
+          ▼ 28.1 %</td>
+        <td></td>
+      </tr></tfoot>
+    </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>Importalux</strong> &nbsp;·&nbsp;
+  CA HT hors frais de port &nbsp;·&nbsp;
+  Avoirs exclus &nbsp;·&nbsp;
+  Généré le 26/06/2026 à 08:00
+</div>
+
+<script>
+// ── Graphique mensuel ──
+new Chart(document.getElementById('chartMensuel'),{
+  type:'bar',
+  data:{
+    labels:["Sep", "Oct", "Nov", "D\u00e9c", "Jan", "F\u00e9v", "Mar", "Avr", "Mai", "Jun", "Jul", "Ao\u00fb"],
+    datasets:[
+      {label:'BDC en cours',
+        data:[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        backgroundColor:'#E67E22CC',borderRadius:5,stack:'N'},
+      {label:'Facturé Saison 2025/2026',
+        data:[3279.05, 1971.5, 0.0, 3829.4, 2393.5, 1606.0, 0.0, 0.0, 4435.0, 1406.0, 0.0, 0.0],
+        backgroundColor:'#CB4335CC',borderRadius:5,stack:'N'},
+      {label:'Facturé Saison 2024/2025',
+        data:[852.8, 790.88, 803.0, 12035.62, 0.0, 1270.12, 0.0, 1673.5, 1964.8, 5336.25, 1601.8, 0.0],
+        backgroundColor:'#95A5A655',borderColor:'#95A5A6',
+        borderWidth:1,borderRadius:5,stack:'N1'}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{position:'bottom',labels:{font:{size:12},padding:16,usePointStyle:true}},
+      tooltip:{callbacks:{
+        label:c=>' '+c.dataset.label+' : '+
+          new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',
+            maximumFractionDigits:0}).format(c.parsed.y),
+        footer:items=>'Total : '+
+          new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',
+            maximumFractionDigits:0}).format(items.reduce((s,i)=>s+i.parsed.y,0))
+      }}
+    },
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{font:{size:12}}},
+      y:{stacked:true,grid:{color:'#EAF0F7'},
+        ticks:{font:{size:12},callback:v=>
+          new Intl.NumberFormat('fr-FR',{notation:'compact',
+            maximumFractionDigits:0}).format(v)+' €'
+        }
+      }
+    }
+  }
+});
+
+// ── Tri tableau ──
+function sortTable(tableId, colIdx, type, thEl) {
+  var tbl   = document.getElementById(tableId);
+  var tbody = tbl.querySelector('tbody');
+  var rows  = Array.from(tbody.querySelectorAll('tr'));
+  var asc   = !thEl.classList.contains('asc');
+  tbl.querySelectorAll('th.th-sort').forEach(h => h.classList.remove('asc','desc'));
+  thEl.classList.add(asc ? 'asc' : 'desc');
+  rows.sort((a,b) => {
+    var va = a.cells[colIdx].dataset.val ?? a.cells[colIdx].innerText.trim();
+    var vb = b.cells[colIdx].dataset.val ?? b.cells[colIdx].innerText.trim();
+    if (type==='num') {
+      return asc ? parseFloat(va)||0 - (parseFloat(vb)||0)
+                 : parseFloat(vb)||0 - (parseFloat(va)||0);
+    }
+    return asc ? va.localeCompare(vb,'fr') : vb.localeCompare(va,'fr');
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+</script>
+</body>
+</html>
